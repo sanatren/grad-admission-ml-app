@@ -1,5 +1,5 @@
 # Graduate-Admission-prediction
-machine learning model developed to predict the chance of admission for students
+Ann model developed to predict the chance of admission for students
 
 git clone https://github.com/khemariya/Graduate-Admission-prediction 
 
