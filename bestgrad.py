@@ -210,12 +210,11 @@ import pickle
 
 # Load the model and scaler
 # Save the model
-model_filename = 'bestgrad.py'
+model_filename = 'bestgrad.pkl'
 with open(model_filename, 'wb') as model_file:
     pickle.dump(reg, model_file)
 
 # Save the scaler
-scaler_filename = 'minmax.py'
+scaler_filename = 'minmax.pkl'
 with open(scaler_filename, 'wb') as scaler_file:
     pickle.dump(minmax, scaler_file)
-
