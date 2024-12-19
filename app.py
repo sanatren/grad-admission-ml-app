@@ -5,18 +5,17 @@ import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.ensemble import RandomForestRegressor
 from io import BytesIO
-import base64
 
 # Set page configuration
 st.set_page_config(
     page_title="Graduate Admission Prediction",
-    page_icon="🎓",
+    page_icon=":mortar_board:",  # Streamlit emoji syntax for 🎓
     layout="wide"
 )
 
@@ -68,7 +67,6 @@ hr {
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-
 # Load Data
 @st.cache_data
 def load_data():
@@ -76,7 +74,6 @@ def load_data():
     Admission = Admission.drop(columns='Serial No.')
     Admission = Admission.rename(columns={'Chance of Admit ': 'Chance of Admit', 'LOR ': 'LOR'})
     return Admission
-
 
 Admission = load_data()
 
@@ -96,13 +93,10 @@ with open('minmax.pkl', 'rb') as scaler_file:
 st.sidebar.title("Navigation")
 nav = st.sidebar.radio("", ["Home", "EDA", "Model Evaluation", "Predict"])
 
-# Optional: Lottie animation (replace URL with your choice)
-# Example Lottie URL: https://assets10.lottiefiles.com/packages/lf20_hu9cd9.json
 st.sidebar.write("---")
-st.sidebar.write("**Created by sanatan khemariya**")
+st.sidebar.write("**Created by Sanatan Khemariya**")
 
 if nav == "Home":
-    # Home Page
     st.markdown("<h1 class='big-title'>Graduate Admission Predictor</h1>", unsafe_allow_html=True)
     st.write("""
     This application predicts the chance of admission for a student applying to graduate school based on their academic and profile features such as GRE Score, TOEFL Score, University Rating, SOP, LOR, CGPA, and Research experience.
@@ -110,29 +104,24 @@ if nav == "Home":
     st.write("---")
     st.write("**What can you find here?**")
     st.write("- **EDA:** Explore the data, distributions, correlations, and relationships between features.")
-    st.write(
-        "- **Model Evaluation:** Review the performance of various regression models tested and see how the best model was chosen.")
+    st.write("- **Model Evaluation:** Review the performance of various regression models tested and see how the best model was chosen.")
     st.write("- **Predict:** Use the best model to predict the chance of admission for a new applicant.")
 
 elif nav == "EDA":
     st.markdown("<h2 class='subheader'>Exploratory Data Analysis</h2>", unsafe_allow_html=True)
     st.write("Below are some of the EDA plots that were generated:")
 
-    # Generate correlation heatmap
     fig_corr, ax = plt.subplots(figsize=(12, 10))
     corr = Admission.corr(numeric_only=True)
     sns.heatmap(corr, annot=True, linewidths=1.5, cmap="YlGnBu", annot_kws={"size": 8}, ax=ax)
     st.write("### Correlation Heatmap")
     st.pyplot(fig_corr)
 
-
-    # Regplots stored as functions to avoid re-running code
     def plot_reg(x, y, title):
         fig, ax = plt.subplots()
         sns.regplot(x=x, y=y, data=Admission, ax=ax)
         ax.set_title(title)
         return fig
-
 
     st.write("### GRE Score vs TOEFL Score")
     st.pyplot(plot_reg("GRE Score", "TOEFL Score", "GRE Score vs TOEFL Score"))
@@ -143,7 +132,6 @@ elif nav == "EDA":
     st.write("### LOR vs CGPA")
     st.pyplot(plot_reg("LOR", "CGPA", "LOR vs CGPA"))
 
-    # For SOP vs CGPA, GRE, TOEFL
     st.write("### CGPA vs SOP")
     st.pyplot(plot_reg("CGPA", "SOP", "CGPA vs SOP"))
 
@@ -163,18 +151,12 @@ elif nav == "Model Evaluation":
     st.markdown("<h2 class='subheader'>Model Evaluation Results</h2>", unsafe_allow_html=True)
     st.write("We tried multiple regression models and evaluated them using R² and RMSE.")
 
-    # We show pre-computed scores from your code snippet (example values)
-    # In your original code, you printed them directly. We can reconstruct results:
-    # Since the user code trains the models, we can quickly retrain key models and display results here.
-
-    # Note: For brevity, let's retrain a few models and show their scores:
     from sklearn.tree import DecisionTreeRegressor
     from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, AdaBoostRegressor
     from sklearn.neighbors import KNeighborsRegressor
     from sklearn.svm import SVR
     from sklearn.linear_model import Lasso, BayesianRidge, ElasticNet, HuberRegressor
     from xgboost import XGBRegressor
-    from catboost import CatBoostRegressor
 
     models = [
         ('Decision Tree', DecisionTreeRegressor()),
@@ -185,7 +167,6 @@ elif nav == "Model Evaluation":
         ('AdaBoost', AdaBoostRegressor()),
         ('GradientBoosting', GradientBoostingRegressor()),
         ('XGBoost', XGBRegressor()),
-        ('CatBoost', CatBoostRegressor(logging_level='Silent')),
         ('Lasso', Lasso()),
         ('Ridge', Ridge()),
         ('BayesianRidge', BayesianRidge()),
@@ -198,21 +179,22 @@ elif nav == "Model Evaluation":
 
     results_data = []
     for name, model in models:
-        model.fit(x_train_scaled, y_train)
-        pred = model.predict(x_test_scaled)
-        rmse = np.sqrt(mean_squared_error(y_test, pred))
-        r2 = r2_score(y_test, pred)
-        results_data.append([name, rmse, r2])
+        try:
+            model.fit(x_train_scaled, y_train)
+            pred = model.predict(x_test_scaled)
+            rmse = np.sqrt(mean_squared_error(y_test, pred))
+            r2 = r2_score(y_test, pred)
+            results_data.append([name, rmse, r2])
+        except Exception as e:
+            st.warning(f"Model {name} failed to run: {e}")
 
     results_df = pd.DataFrame(results_data, columns=["Model", "RMSE", "R² Score"])
     st.write("### Model Comparison")
     st.dataframe(results_df)
 
-    # Highlight best models based on R²
     best_model = results_df.iloc[results_df['R² Score'].idxmax()]
     st.write(f"**Best Model:** {best_model['Model']} with R² = {best_model['R² Score']:.4f}")
 
-    # Feature importance from Random Forest
     st.write("### Feature Importances (Random Forest)")
     rf = RandomForestRegressor(random_state=42)
     rf.fit(x_train_scaled, y_train)
@@ -255,7 +237,6 @@ elif nav == "Model Evaluation":
 elif nav == "Predict":
     st.markdown("<h2 class='subheader'>Predict Your Chance of Admission</h2>", unsafe_allow_html=True)
 
-    # Create input fields
     gre = st.slider("GRE Score", 0, 340, 320)
     toefl = st.slider("TOEFL Score", 0, 120, 110)
     rating = st.slider("University Rating", 1, 5, 3)
